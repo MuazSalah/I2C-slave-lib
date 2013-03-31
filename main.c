@@ -1,10 +1,54 @@
+////////////////////////////////////////////////////////////////////////
+//	I2C	SLAVE
+////////////////////////////////////////////////////////////////////////
+
+/*
+
+I2C Slave MCU implementaiton:
+
+(1) Master Transmitting to Slave:
+
+	A- Specify the Slave Address (Slave_Address)
+
+	=> receive the data on rxbuffer[i]
+
+		i is the index defined by the master transmitter
+		i range is 0-254
+
+
+(2) Master Reading from slave
+
+	A- Specify the Slave Address (Slave_Address)
+	
+	B- Specify the data you want to transmit in txbuffer[i]
+	
+		i is chosen by the master
+		i range is 0-254
+
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #ifndef F_CPU
 #define F_CPU 16000000UL
 #endif
 
+
+
 #include <avr/io.h>
 #include <util/delay.h>
-#include <stdlib.h>
 #include <avr/interrupt.h>
 
 #include "I2C_slave.h"
@@ -12,43 +56,35 @@
 // buffer used to convert integer to string
 char buffer[3];
 
-void init_uart(uint16_t baudrate){
 
-	uint16_t UBRR_val = (F_CPU/16)/(baudrate-1);
 
-	UBRR0H = UBRR_val >> 8;
-	UBRR0L = UBRR_val;
+#define Slave_Address	0x02
 
-	UCSR0B |= (1<<TXEN0) | (1<<RXEN0) | (1<<RXCIE0); // UART TX (Transmit - senden) einschalten
-	UCSR0C |= (1<<USBS0) | (3<<UCSZ00); //Modus Asynchron 8N1 (8 Datenbits, No Parity, 1 Stopbit)
-}
 
-void uart_putc(unsigned char c){
 
-	while(!(UCSR0A & (1<<UDRE0))); // wait until sending is possible
-	UDR0 = c; // output character saved in c
-}
-
-void uart_puts(char *s){
-	while(*s){
-		uart_putc(*s);
-		s++;
-	}
-}
-
-int main(void){
+int main(void)
+{
 	
-	init_uart(57600);
-	I2C_init(0x32); // initalize as slave with address 0x32
+	I2C_init(Slave_Address); // initalize as slave with address Slave_Address
 	
+	txbuffer[0] = 0x55;
+
 	// allow interrupts
 	sei();
 	
-	while(1){
-		// convert receiver buffer index 0 to character array and send it via UART
-		itoa(rxbuffer[0], buffer, 10);
-		uart_puts(buffer);
-		_delay_ms(1000);
+	DDRB=0xFF;
+	
+	while(1)
+	{
+		
+		PORTB=0xFF;
+		_delay_ms(rxbuffer[0]);
+		PORTB=0x00;
+		_delay_ms(rxbuffer[1]);
+		
+		txbuffer[1] = rxbuffer[1];
+		
+		
 	}
 	
 	return 0;
